@@ -14,9 +14,7 @@ import (
 
 const (
 	topic          = "my-kafka-topic"
-	broker1Address = "localhost:9093"
-	broker2Address = "localhost:9094"
-	broker3Address = "localhost:9095"
+	broker1Address = "kafka-strimzi-kafka-bootstrap.kafka-demo.svc:9092"
 )
 
 type App struct {
@@ -45,7 +43,7 @@ func (a *App) initialize() {
 	a.Key = 0
 
 	a.Writer = kafka.NewWriter(kafka.WriterConfig{
-		Brokers: []string{broker1Address, broker2Address, broker3Address},
+		Brokers: []string{broker1Address},
 		Topic:   topic,
 	})
 

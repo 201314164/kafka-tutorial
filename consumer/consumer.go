@@ -15,14 +15,12 @@ import (
 
 const (
 	topic          = "my-kafka-topic"
-	broker1Address = "localhost:9093"
-	broker2Address = "localhost:9094"
-	broker3Address = "localhost:9095"
+	broker1Address = "kafka-strimzi-kafka-bootstrap.kafka-demo.svc:9092"
 )
 
 func consume(ctx context.Context) {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{broker1Address, broker2Address, broker3Address},
+		Brokers: []string{broker1Address},
 		Topic:   topic,
 		GroupID: "my-group",
 	})
@@ -47,20 +45,33 @@ func consume(ctx context.Context) {
 
 			responseBody := bytes.NewBuffer([]byte(jsonMsg))
 
-			resp, err := http.Post("http://34.123.46.26/add", "application/json", responseBody)
+			respMongo, err := http.Post("http://34.123.46.26/add", "application/json", responseBody)
 			if err != nil {
 				log.Fatalf("An error occured %v", err)
 			}
-			defer resp.Body.Close()
+			defer respMongo.Body.Close()
 
-			body, err := ioutil.ReadAll(resp.Body)
+			fmt.Printf("Body: %s", responseBody)
+
+			respRedis, err := http.Post("http://146.148.106.74:3000/add", "application/json", responseBody)
+			if err != nil {
+				log.Fatalf("An error occured %v", err)
+			}
+			defer respRedis.Body.Close()
+
+			fmt.Printf("Body: %s", responseBody)
+
+			bodyMongo, err := ioutil.ReadAll(respMongo.Body)
 			if err != nil {
 				log.Fatalln(err)
 			}
 
-			sb := string(body)
+			bodyRedis, err := ioutil.ReadAll(respRedis.Body)
+			if err != nil {
+				log.Fatalln(err)
+			}
 
-			fmt.Printf("Recieved: %+v\n - %s", info, sb)
+			fmt.Printf("Mongo: %s - Redis: %s", string(bodyMongo), string(bodyRedis))
 		} else {
 			fmt.Println("Recieved : ", string(msg.Value))
 		}
