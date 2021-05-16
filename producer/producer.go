@@ -61,13 +61,19 @@ func (a *App) serve() {
 func (a *App) send(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Peticion POST /")
 	info := struct {
-		Mensaje string `json:"msg"`
+		Name     string `json:"name"`
+		Location string `json:"location"`
+		Gender   string `json:"gender"`
+		Age      int    `json:"age"`
+		Vaccine  string `json:"vaccine_type"`
 	}{}
 	_ = json.NewDecoder(r.Body).Decode(&info)
+	r.Body.Close()
 
 	err := a.Writer.WriteMessages(a.Context, kafka.Message{
-		Key:   []byte(strconv.Itoa(a.Key)),
-		Value: []byte(info.Mensaje),
+		Key: []byte(strconv.Itoa(a.Key)),
+		Value: []byte(fmt.Sprintf(`JSON:{"name":"%s", "location":"%s", "gender":"%s", "age":%s, "vaccine_type":"%s", "route":"kafka"}`,
+			info.Name, info.Location, info.Gender, strconv.Itoa(info.Age), info.Vaccine)),
 	})
 
 	if err != nil {
@@ -75,7 +81,7 @@ func (a *App) send(w http.ResponseWriter, r *http.Request) {
 		panic("Could not write message " + err.Error())
 	}
 
-	fmt.Println("Writes: "+info.Mensaje, a.Key)
+	fmt.Printf("Write: %+v\n", info)
 	a.Key++
 
 	respondWithJSON(w, http.StatusOK, "Vacunado Agregado")
